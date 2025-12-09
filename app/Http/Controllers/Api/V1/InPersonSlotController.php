@@ -345,6 +345,8 @@ class InPersonSlotController extends Controller
         $validated = $request->validate([
             'slot_id' => 'required|exists:available_slots,id',
             'scheduled_date' => 'required',
+            'points_to_use' => 'nullable',
+            'new_payment_amount' => 'nullable',
         ]);
 
         try {
@@ -366,11 +368,24 @@ class InPersonSlotController extends Controller
                 ]);
             }
 
-            $price = $slot->price;
+            $amountPaid = $slot->price;
+
+            if (isset($validated['points_to_use']) && isset($validated['new_payment_amount'])) {
+                // Deduct points from user
+                $user = Auth::user();
+                $pointsToUse = (int)$validated['points_to_use'];
+                $user->points -= $pointsToUse;
+                $user->save();
+
+                // Adjust amount paid
+                $amountPaid = (float)$validated['new_payment_amount'];
+            }
+
+            $amountPaid = $amountPaid + 7.95; // add fixed fee
 
             // Create payment intent
             $paymentIntent = $this->paymentService->createPaymentIntent(
-                $price,
+                $amountPaid,
                 'usd', // or get from config/slot
                 [
                     'slot_id' => $slot->id,
@@ -400,7 +415,7 @@ class InPersonSlotController extends Controller
                     'scheduled_date' => $validated['scheduled_date'],
                     'start_time' => $slot->start_time,
                     'end_time' => $slot->end_time,
-                    'price' => $price,
+                    'price' => $amountPaid,
                 ]
             ]);
 
