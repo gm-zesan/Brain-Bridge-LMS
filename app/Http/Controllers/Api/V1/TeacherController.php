@@ -417,7 +417,7 @@ class TeacherController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/teacher/select-main-courses",
+     *     path="/api/teachers/select-main-courses",
      *     summary="Select main courses for a teacher",
      *     description="Allows an authenticated teacher to mark specific courses as main courses. First resets all to is_main=false, then marks selected ones as true.",
      *     tags={"Teachers"},
@@ -468,9 +468,8 @@ class TeacherController extends Controller
         ]);
 
         $user = Auth::user();
-        $teacher = $user->teacher;
 
-        $teacherCourseIds = $teacher->courses()->pluck('id')->toArray();
+        $teacherCourseIds = Course::where('teacher_id', $user->id)->pluck('id')->toArray();
 
         Course::whereIn('id', $teacherCourseIds)->update(['is_main' => false]);
 

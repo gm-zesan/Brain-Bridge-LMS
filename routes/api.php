@@ -76,7 +76,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('teacher-levels', TeacherLevelController::class);
 
     Route::apiResource('teachers', TeacherController::class)->except(['store']);
-    Route::get('/teacher/{id}/details', [TeacherController::class, 'teacherDetails']);
+    Route::get('/teachers/{id}/details', [TeacherController::class, 'teacherDetails']);
     Route::post('/teachers/select-main-courses', [TeacherController::class, 'selectMainCourses']);
 
 

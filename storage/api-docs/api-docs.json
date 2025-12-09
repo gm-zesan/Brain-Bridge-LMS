@@ -6463,17 +6463,22 @@
                             }
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
-        "/api/teacher/select-main-courses": {
+        "/api/teachers/select-main-courses": {
             "post": {
                 "tags": [
                     "Teachers"
                 ],
                 "summary": "Select main courses for a teacher",
                 "description": "Allows an authenticated teacher to mark specific courses as main courses. First resets all to is_main=false, then marks selected ones as true.",
-                "operationId": "45efda477e8eabca76eb60804bfeb7a0",
+                "operationId": "48239139c78cd8e01f09c69f98cb20e0",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -6544,7 +6549,12 @@
                     "401": {
                         "description": "Unauthenticated"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/teacher-levels": {
