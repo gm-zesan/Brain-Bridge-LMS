@@ -404,7 +404,9 @@ class TeacherController extends Controller
                 ->where('teacher_id', $id)
                 ->get();
                 
-        $formattedOnlineSlots = $availableSlots->map(fn($slot) => SlotService::formatSlot($slot));
+        $formattedOnlineSlots = $availableSlots->map(function ($slot) {
+            return SlotService::formatSlot($slot);
+        });
 
         return response()->json([
             'status' => 'success',
