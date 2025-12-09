@@ -23,10 +23,10 @@ class DatabaseSeeder extends Seeder
             SubjectSeeder::class,
             SkillSeeder::class,
 
-            CourseSeeder::class,
-            ModuleSeeder::class,
-            VideoLessonSeeder::class,
-            AvailableSlotSeeder::class,
+            // CourseSeeder::class,
+            // ModuleSeeder::class,
+            // VideoLessonSeeder::class,
+            // AvailableSlotSeeder::class,
         ]);
     }
 }
