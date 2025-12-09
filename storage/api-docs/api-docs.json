@@ -6348,6 +6348,205 @@
                 ]
             }
         },
+        "/api/teachers/{id}/details": {
+            "get": {
+                "tags": [
+                    "Teachers"
+                ],
+                "summary": "Get full details of a specific teacher",
+                "description": "Returns teacher information including skills, courses, available online slots, and available in-person slots.",
+                "operationId": "19a5e444ee2c6c8b6da070b8ddfffdd2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Teacher user ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "teacher": {
+                                            "description": "Teacher main information",
+                                            "type": "object"
+                                        },
+                                        "available_slots": {
+                                            "description": "Formatted online available slots",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "example": {
+                                                    "id": 12,
+                                                    "title": "Math Class",
+                                                    "subject_id": 3,
+                                                    "from_date": "2025-02-20",
+                                                    "to_date": "2025-03-01",
+                                                    "start_time": "10:00:00",
+                                                    "end_time": "11:00:00",
+                                                    "type": "online",
+                                                    "price": 500,
+                                                    "description": "Basic math topics",
+                                                    "daily_available_seats": {
+                                                        "2025-02-20": {
+                                                            "booked": 1,
+                                                            "available": 4
+                                                        },
+                                                        "2025-02-21": {
+                                                            "booked": 0,
+                                                            "available": 5
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "in_person_slots": {
+                                            "description": "Formatted in-person slots",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "example": {
+                                                    "id": 7,
+                                                    "title": "Dhaka Batch Training",
+                                                    "subject_id": 2,
+                                                    "from_date": "2025-02-15",
+                                                    "to_date": "2025-02-18",
+                                                    "start_time": "14:00:00",
+                                                    "end_time": "16:00:00",
+                                                    "type": "in_person",
+                                                    "price": 1500,
+                                                    "description": "In-person training session",
+                                                    "location": {
+                                                        "country": "Bangladesh",
+                                                        "state": "Dhaka",
+                                                        "city": "Mirpur",
+                                                        "full_address": "Mirpur DOHS Road 18"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Teacher not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "error"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Teacher not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/teacher/select-main-courses": {
+            "post": {
+                "tags": [
+                    "Teachers"
+                ],
+                "summary": "Select main courses for a teacher",
+                "description": "Allows an authenticated teacher to mark specific courses as main courses. First resets all to is_main=false, then marks selected ones as true.",
+                "operationId": "45efda477e8eabca76eb60804bfeb7a0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ids"
+                                ],
+                                "properties": {
+                                    "ids": {
+                                        "description": "Array of course IDs to set as main",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer",
+                                            "example": 3
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Main courses updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Main courses updated successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation error."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                }
+            }
+        },
         "/api/teacher-levels": {
             "get": {
                 "tags": [

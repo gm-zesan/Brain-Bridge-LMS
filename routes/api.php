@@ -76,6 +76,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('teacher-levels', TeacherLevelController::class);
 
     Route::apiResource('teachers', TeacherController::class)->except(['store']);
+    Route::get('/teacher/{id}/details', [TeacherController::class, 'teacherDetails']);
+    Route::post('/teachers/select-main-courses', [TeacherController::class, 'selectMainCourses']);
+
+
     Route::apiResource('subjects', SubjectController::class)->except(['index']);
     Route::apiResource('skills', SkillController::class)->except(['index']);
     

@@ -567,6 +567,8 @@ class InPersonSlotController extends Controller
             $amountPaid = (float)$validated['new_payment_amount'];
         }
 
+        $amountPaid = $amountPaid + 7.95; // add fixed fee
+
         $data = [
             'slot_id' => $slot->id,
             'teacher_id' => $slot->teacher_id,

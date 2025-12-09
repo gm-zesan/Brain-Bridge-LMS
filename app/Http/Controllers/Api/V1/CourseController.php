@@ -460,6 +460,8 @@ class CourseController extends Controller
             $amountPaid = (float)$validated['new_payment_amount'];
         }
 
+        $amountPaid = $amountPaid + 7.95; // add fixed fee
+
         // Create course enrollment
         $enrollment = CourseEnrollment::create([
             'course_id' => $course->id,

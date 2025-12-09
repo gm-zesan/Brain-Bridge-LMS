@@ -70,6 +70,11 @@ class Teacher extends Model
         return $this->hasMany(Course::class, 'teacher_id');
     }
 
+    public function inPersonSlots()
+    {
+        return $this->hasMany(InPersonSlot::class, 'teacher_id');
+    }
+
     public function reviews()
     {
         return $this->hasMany(Review::class, 'teacher_id');

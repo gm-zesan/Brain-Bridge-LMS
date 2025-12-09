@@ -3,15 +3,18 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Course;
 use App\Models\Teacher;
 use App\Models\TeacherLevel;
 use App\Models\User;
 use App\Services\FirebaseService;
+use App\Services\SlotService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Exception;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Support\Facades\Auth;
 
 class TeacherController extends Controller
 {
@@ -287,5 +290,200 @@ class TeacherController extends Controller
         return response()->json(['message' => 'Teacher deleted successfully']);
 
     }
+
+
+
+
+    /**
+     * @OA\Get(
+     *     path="/api/teachers/{id}/details",
+     *     summary="Get full details of a specific teacher",
+     *     description="Returns teacher information including skills, courses, available online slots, and available in-person slots.",
+     *     tags={"Teachers"},
+     *
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         description="Teacher user ID",
+     *         @OA\Schema(type="integer", example=5)
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful response",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="success"),
+     *
+     *             @OA\Property(
+     *                 property="teacher",
+     *                 type="object",
+     *                 description="Teacher main information",
+     *             ),
+     *
+     *             @OA\Property(
+     *                 property="available_slots",
+     *                 type="array",
+     *                 description="Formatted online available slots",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     example={
+     *                         "id": 12,
+     *                         "title": "Math Class",
+     *                         "subject_id": 3,
+     *                         "from_date": "2025-02-20",
+     *                         "to_date": "2025-03-01",
+     *                         "start_time": "10:00:00",
+     *                         "end_time": "11:00:00",
+     *                         "type": "online",
+     *                         "price": 500,
+     *                         "description": "Basic math topics",
+     *                         "daily_available_seats": {
+     *                             "2025-02-20": {"booked": 1, "available": 4},
+     *                             "2025-02-21": {"booked": 0, "available": 5}
+     *                         }
+     *                     }
+     *                 )
+     *             ),
+     *
+     *             @OA\Property(
+     *                 property="in_person_slots",
+     *                 type="array",
+     *                 description="Formatted in-person slots",
+     *                 @OA\Items(
+     *                     type="object",
+     *                     example={
+     *                         "id": 7,
+     *                         "title": "Dhaka Batch Training",
+     *                         "subject_id": 2,
+     *                         "from_date": "2025-02-15",
+     *                         "to_date": "2025-02-18",
+     *                         "start_time": "14:00:00",
+     *                         "end_time": "16:00:00",
+     *                         "type": "in_person",
+     *                         "price": 1500,
+     *                         "description": "In-person training session",
+     *                         "location": {
+     *                             "country": "Bangladesh",
+     *                             "state": "Dhaka",
+     *                             "city": "Mirpur",
+     *                             "full_address": "Mirpur DOHS Road 18"
+     *                         }
+     *                     }
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=404,
+     *         description="Teacher not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="string", example="error"),
+     *             @OA\Property(property="message", type="string", example="Teacher not found")
+     *         )
+     *     )
+     * )
+    */
+
+
+    public function teacherDetails($id)
+    {
+        $teacher = User::with([
+                'teacher',
+                'teacher.skills',
+                'teacher.courses',
+                'teacher.availableSlots',
+                'teacher.inPersonSlots',
+            ])->findOrFail($id);
+
+        // Format available slots
+        $formattedOnlineSlots = $teacher->teacher->availableSlots
+            ->map(fn($slot) => SlotService::formatSlot($slot));
+
+        // Format in-person slots
+        $formattedInPersonSlots = $teacher->teacher->inPersonSlots
+            ->map(fn($slot) => SlotService::formatSlot($slot));
+
+        return response()->json([
+            'status' => 'success',
+            'teacher' => $teacher,
+            'available_slots' => $formattedOnlineSlots,
+            'in_person_slots' => $formattedInPersonSlots,
+        ]);
+    }
+
+
+
+    /**
+     * @OA\Post(
+     *     path="/api/teacher/select-main-courses",
+     *     summary="Select main courses for a teacher",
+     *     description="Allows an authenticated teacher to mark specific courses as main courses. First resets all to is_main=false, then marks selected ones as true.",
+     *     tags={"Teachers"},
+     *
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"ids"},
+     *             @OA\Property(
+     *                 property="ids",
+     *                 type="array",
+     *                 @OA\Items(type="integer", example=3),
+     *                 description="Array of course IDs to set as main"
+     *             )
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=200,
+     *         description="Main courses updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Main courses updated successfully.")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Validation error."),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     ),
+     *
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+    */
+    public function selectMainCourses(Request $request)
+    {
+        $data = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:courses,id',
+        ]);
+
+        $user = Auth::user();
+        $teacher = $user->teacher;
+
+        $teacherCourseIds = $teacher->courses()->pluck('id')->toArray();
+
+        Course::whereIn('id', $teacherCourseIds)->update(['is_main' => false]);
+
+        Course::whereIn('id', $data['ids'])->whereIn('id', $teacherCourseIds)->update(['is_main' => true]);
+
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Main courses updated successfully.'
+        ]);
+    }
+
+
+
 
 }
