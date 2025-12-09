@@ -40,9 +40,6 @@ class SlotService
         return [
             'id' => $slot->id,
             'title' => $slot->title,
-            'teacher' => $slot->teacher,
-            'subject' => $slot->subject,
-            'subject_id' => $slot->subject_id,
             'from_date' => $from->toDateString(),
             'to_date' => $to->toDateString(),
             'start_time' => $slot->start_time,

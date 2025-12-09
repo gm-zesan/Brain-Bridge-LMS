@@ -386,30 +386,32 @@ class TeacherController extends Controller
      * )
     */
 
-
+    
+            
     public function teacherDetails($id)
     {
-        $teacher = User::with([
-                'teacher',
-                'teacher.skills',
-                'teacher.courses',
-                'teacher.availableSlots',
-                'teacher.inPersonSlots',
-            ])->findOrFail($id);
+        // Get the user
+        $user = User::findOrFail($id);
 
-        // Format available slots
-        $formattedOnlineSlots = $teacher->teacher->availableSlots
-            ->map(fn($slot) => SlotService::formatSlot($slot));
+        // Get teacher profile
+        $teacher = $user->teacher;
 
-        // Format in-person slots
-        $formattedInPersonSlots = $teacher->teacher->inPersonSlots
-            ->map(fn($slot) => SlotService::formatSlot($slot));
+        // Get teacher relations manually
+        $skills = $teacher->skills;
+        $courses = Course::where('teacher_id', $user->id)->get();
+        
+        $availableSlots = DB::table('available_slots')
+                ->where('teacher_id', $id)
+                ->get();
+                
+        $formattedOnlineSlots = $availableSlots->map(fn($slot) => SlotService::formatSlot($slot));
 
         return response()->json([
             'status' => 'success',
             'teacher' => $teacher,
-            'available_slots' => $formattedOnlineSlots,
-            'in_person_slots' => $formattedInPersonSlots,
+            'courses' => $courses,
+            'skills' => $skills,
+            'available_slots' => $formattedOnlineSlots
         ]);
     }
 
