@@ -571,17 +571,6 @@ class InPersonSlotController extends Controller
             $amountPaid = $slot->price;
         }
 
-        if (isset($validated['points_to_use']) && isset($validated['new_payment_amount'])) {
-            // Deduct points from user
-            $user = Auth::user();
-            $pointsToUse = (int)$validated['points_to_use'];
-            $user->points -= $pointsToUse;
-            $user->save();
-
-            // Adjust amount paid
-            $amountPaid = (float)$validated['new_payment_amount'];
-        }
-
         $amountPaid = $amountPaid + 7.95; // add fixed fee
 
         $data = [
