@@ -169,4 +169,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     
+    // Chat Routes
+    Route::get('/chats/{userId}', [\App\Http\Controllers\Api\ChatController::class, 'index']);
+    Route::post('/chats/send', [\App\Http\Controllers\Api\ChatController::class, 'store']);
+
 });
