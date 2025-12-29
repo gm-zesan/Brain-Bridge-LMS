@@ -9,6 +9,7 @@ class Subject extends Model
     protected $fillable = [
         'name',
         'parent_id',
+        'base_pay',
         'icon'
     ];
 

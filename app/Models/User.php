@@ -32,12 +32,12 @@ class User extends Authenticatable implements MustVerifyEmail
         'phone',
         'bio',
         'address',
+        'date_of_birth',
         'profile_picture',
         'is_active',
         'points',
         'referral_code',
         'referred_by',
-
     ];
 
     /**
@@ -60,6 +60,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'date_of_birth' => 'date',
         ];
     }
 

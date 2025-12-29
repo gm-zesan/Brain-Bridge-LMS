@@ -73,7 +73,7 @@ class InPersonSlotController extends Controller
     */
     public function index(Request $request)
     {
-        $query = InPersonSlot::with('teacher:id,name,email', 'subject:id,name');
+        $query = InPersonSlot::with('teacher:id,name,email', 'subject:id,name,base_pay');
         
         // Filter by teacher
         if ($request->filled('teacher_id')) {
@@ -174,7 +174,7 @@ class InPersonSlotController extends Controller
     */
     public function show($id)
     {
-        $slot = InPersonSlot::with('teacher:id,name,email', 'subject:id,name')
+        $slot = InPersonSlot::with('teacher:id,name,email', 'subject:id,name,base_pay')
             ->findOrFail($id);
 
         $fromDate = $slot->from_date < now()->toDateString()

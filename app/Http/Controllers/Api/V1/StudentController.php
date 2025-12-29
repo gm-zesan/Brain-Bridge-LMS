@@ -9,6 +9,7 @@ use App\Services\FirebaseService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class StudentController extends Controller
@@ -69,7 +70,9 @@ class StudentController extends Controller
             'email' => 'required|email|unique:users',
             'password' => 'required|min:6',
             'name' => 'required|string|max:255',
-            'referral_code' => 'nullable|exists:users,referral_code'
+            'referral_code' => 'nullable|exists:users,referral_code',
+            'date_of_birth' => 'nullable|date',
+            'address' => 'nullable|string|max:500'
         ]);
 
         if ($validator->fails()) {
@@ -91,6 +94,8 @@ class StudentController extends Controller
                 'firebase_uid' => $firebaseUser->uid,
                 'password' => bcrypt($request->password),
                 'referred_by' => $request->referral_code ?? null,
+                'date_of_birth' => $request->date_of_birth ?? null,
+                'address' => $request->address ?? null,
             ]);
 
             // ---- REFERRAL LOGIC ----
@@ -194,20 +199,56 @@ class StudentController extends Controller
      *      )
      * )
      */
+    // public function update(Request $request, User $student)
+    // {
+    //     $data = $request->validate([
+    //         'name' => 'sometimes|string|max:255',
+    //         'email' => 'sometimes|string|email|max:255|unique:users,email,' . $student->id,
+    //         'phone' => 'sometimes|string|max:20',
+    //         'bio' => 'sometimes|string',
+    //         'address' => 'sometimes|string',
+    //         'date_of_birth' => 'sometimes|date',
+    //         'profile_picture' => 'sometimes|string',
+    //     ]);
+    //     $student->update($data);
+    //     return response()->json([
+    //         'message' => 'Student updated successfully',
+    //         'student' => $student
+    //     ], 200);
+    // }
     public function update(Request $request, User $student)
     {
         $data = $request->validate([
             'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $student->id,
+            'email' => 'sometimes|email|max:255|unique:users,email,' . $student->id,
             'phone' => 'sometimes|string|max:20',
             'bio' => 'sometimes|string',
             'address' => 'sometimes|string',
-            'profile_picture' => 'sometimes|string',
-        ]); 
+            'date_of_birth' => 'sometimes|date',
+            'profile_picture' => 'sometimes|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ]);
+
+        /* ===== Profile Picture Upload ===== */
+        if ($request->hasFile('profile_picture')) {
+
+            // Delete old picture if exists
+            if ($student->profile_picture && Storage::disk('public')->exists($student->profile_picture)) {
+                Storage::disk('public')->delete($student->profile_picture);
+            }
+
+            $file = $request->file('profile_picture');
+            $filename = uniqid() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('profile_picture', $filename, 'public');
+
+            $data['profile_picture'] = $path;
+        }
+
         $student->update($data);
+
         return response()->json([
+            'success' => true,
             'message' => 'Student updated successfully',
-            'student' => $student
+            'student' => $student,
         ], 200);
     }
 }

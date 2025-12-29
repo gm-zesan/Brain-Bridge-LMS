@@ -80,7 +80,7 @@ class AvailableSlotController extends Controller
     */
     public function index(Request $request)
     {
-        $query = AvailableSlot::with('teacher:id,name,email', 'subject:id,name');
+        $query = AvailableSlot::with('teacher:id,name,email', 'subject:id,name,base_pay');
         
         // Filter by teacher
         if ($request->filled('teacher_id')) {
@@ -179,7 +179,7 @@ class AvailableSlotController extends Controller
     */
     public function show($id)
     {
-        $slot = AvailableSlot::with('teacher:id,name,email', 'subject:id,name')
+        $slot = AvailableSlot::with('teacher:id,name,email', 'subject:id,name,base_pay')
             ->findOrFail($id);
 
         $fromDate = $slot->from_date < now()->toDateString()
@@ -225,7 +225,7 @@ class AvailableSlotController extends Controller
             'start_time' => $slot->start_time,
             'end_time' => $slot->end_time,
             'type' => $slot->type,
-            'price' => $slot->price,
+            'price' => $slot->subject->base_pay ?? $slot->price,
             'description' => $slot->description,
             'daily_available_seats' => $dailyAvailability,
             'booked_slots' => $bookedSessions,

@@ -51,6 +51,7 @@ class SubjectController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'parent_id' => 'nullable|exists:subjects,id',
+            'base_pay' => 'nullable|numeric|min:0',
             'icon' => 'nullable|file|mimes:jpeg,jpg,png,gif,svg|max:2048',
         ]);
 
@@ -125,6 +126,7 @@ class SubjectController extends Controller
         $data = $request->validate([
             'name' => 'sometimes|string|max:255',
             'parent_id' => 'nullable|exists:subjects,id',
+            'base_pay' => 'nullable|numeric|min:0',
             'icon' => 'nullable|file|mimes:jpeg,jpg,png,gif,svg|max:2048',
         ]);
 

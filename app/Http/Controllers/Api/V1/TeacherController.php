@@ -15,6 +15,7 @@ use Illuminate\Validation\Rule;
 use Exception;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class TeacherController extends Controller
 {
@@ -106,6 +107,9 @@ class TeacherController extends Controller
             'email' => 'required|string|email|max:255',
             'password' => 'required|string|min:6',
             'title' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:500',
+            'date_of_birth' => 'nullable|date',
+            'profile_picture' => 'nullable'
         ]);
         DB::beginTransaction();
 
@@ -124,13 +128,23 @@ class TeacherController extends Controller
             ]);
 
             $firebaseUid = $firebaseUser->uid;
+
+            if ($request->hasFile('profile_picture')) {
+                $profilePicture = $request->file('profile_picture');
+                $profilePictureName = time() . '_' . uniqid() . '.' . $profilePicture->getClientOriginalExtension();
+                $profilePicturePath = $profilePicture->storeAs('profile_picture', $profilePictureName, 'public');
+                $data['profile_picture'] = $profilePicturePath;
+            }
             
             // Create local user
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'firebase_uid' => $firebaseUid,
-                'password' => bcrypt($data['password'])
+                'password' => bcrypt($data['password']),
+                'address' => $data['address'] ?? null,
+                'date_of_birth' => $data['date_of_birth'] ?? null,
+                'profile_picture' => $data['profile_picture'] ?? null,
             ]);
         } 
 
@@ -227,36 +241,67 @@ class TeacherController extends Controller
      *     @OA\Response(response=200, description="Teacher updated successfully"),
      *     @OA\Response(response=404, description="Teacher not found")
      * )
-     */
+    */
+
+    // public function update(Request $request, Teacher $teacher) { $data = $request->validate([ 'name' => 'required|string|max:255', 'email' => ['required','email','max:255',Rule::unique('users')->ignore($teacher->id)], 'title' => 'nullable|string|max:255', 'introduction_video' => 'nullable|string', 'phone' => 'nullable|string|max:20', 'bio' => 'nullable|string', 'address' => 'nullable|string', 'profile_picture' => 'nullable|string', ]); $userData = [ 'name' => $data['name'], 'email' => $data['email'], 'phone' => $data['phone'] ?? $teacher->user->phone, 'bio' => $data['bio'] ?? $teacher->user->bio, 'address' => $data['address'] ?? $teacher->user->address, 'profile_picture' => $data['profile_picture'] ?? $teacher->user->profile_picture, ]; $teacherData = [ 'title' => $data['title'] ?? $teacher->title, 'introduction_video' => $data['introduction_video'] ?? $teacher->introduction_video, ]; $teacher->user->update($userData); $teacher->update($teacherData); return response()->json([ 'message' => 'Teacher updated successfully.', 'data' => $teacher->load('user'), ]); }
+
+
+
     public function update(Request $request, Teacher $teacher)
     {
         $data = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required','email','max:255',Rule::unique('users')->ignore($teacher->id)],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users')->ignore($teacher->user_id),
+            ],
             'title' => 'nullable|string|max:255',
             'introduction_video' => 'nullable|string',
             'phone' => 'nullable|string|max:20',
             'bio' => 'nullable|string',
             'address' => 'nullable|string',
-            'profile_picture' => 'nullable|string',
+            'date_of_birth' => 'nullable|date',
+            'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        $userData = [
+        $user = $teacher->user;
+
+        /* ===== Profile Picture Upload ===== */
+        if ($request->hasFile('profile_picture')) {
+
+            // Delete old picture if exists
+            if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
+                Storage::disk('public')->delete($user->profile_picture);
+            }
+
+            $file = $request->file('profile_picture');
+            $filename = uniqid() . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('profile_picture', $filename, 'public');
+
+            $data['profile_picture'] = $path;
+        }
+
+        /* ===== Update User ===== */
+        $user->update([
             'name' => $data['name'],
             'email' => $data['email'],
-            'phone' => $data['phone'] ?? $teacher->user->phone,
-            'bio' => $data['bio'] ?? $teacher->user->bio,
-            'address' => $data['address'] ?? $teacher->user->address,
-            'profile_picture' => $data['profile_picture'] ?? $teacher->user->profile_picture,
-        ];
-        $teacherData = [
+            'phone' => $data['phone'] ?? $user->phone,
+            'bio' => $data['bio'] ?? $user->bio,
+            'address' => $data['address'] ?? $user->address,
+            'date_of_birth' => $data['date_of_birth'] ?? $user->date_of_birth,
+            'profile_picture' => $data['profile_picture'] ?? $user->profile_picture,
+        ]);
+
+        /* ===== Update Teacher ===== */
+        $teacher->update([
             'title' => $data['title'] ?? $teacher->title,
             'introduction_video' => $data['introduction_video'] ?? $teacher->introduction_video,
-        ];
+        ]);
 
-        $teacher->user->update($userData);
-        $teacher->update($teacherData);
         return response()->json([
+            'success' => true,
             'message' => 'Teacher updated successfully.',
             'data' => $teacher->load('user'),
         ]);
@@ -282,6 +327,11 @@ class TeacherController extends Controller
     public function destroy(Teacher $teacher)
     {
         $user = $teacher->user;
+
+        if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
+            Storage::disk('public')->delete($user->profile_picture);
+        }
+
         $teacher->delete();
         if ($user) {
             $user->removeRole('teacher');
